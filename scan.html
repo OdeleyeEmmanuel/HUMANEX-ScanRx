@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#06100e">
+  <meta name="description" content="HUMANEX ScanRx package scanner and NAFDAC registration reference lookup.">
+  <title>HUMANEX ScanRx | Verify</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="scanner-body">
+  <div class="scanner-app">
+    <header class="scanner-header">
+      <a class="brand" href="index.html" aria-label="Back to HUMANEX ScanRx home">
+        <span class="brand-mark">H</span>
+        <span><strong>HUMANEX</strong><small>ScanRx</small></span>
+      </a>
+      <a class="back-link" href="index.html">Home</a>
+    </header>
+
+    <main class="scanner-main">
+      <section class="scanner-intro" aria-labelledby="scannerTitle">
+        <p class="eyebrow">HUMANEX ScanRx</p>
+        <h1 id="scannerTitle">Verify a medicine or health product</h1>
+        <p>Read the NAFDAC registration number printed on the package, then compare it with the supplied reference records.</p>
+      </section>
+
+      <section class="scanner-card" aria-labelledby="scanProductTitle">
+        <div class="card-heading">
+          <div>
+            <p class="eyebrow">SCAN PRODUCT</p>
+            <h2 id="scanProductTitle">Position the product inside the frame</h2>
+          </div>
+        </div>
+
+        <div class="camera-frame" id="cameraFrame">
+          <video id="cameraVideo" playsinline muted hidden></video>
+          <img id="imagePreview" alt="Captured or uploaded product package" hidden>
+          <canvas id="captureCanvas" hidden></canvas>
+
+          <div class="camera-placeholder" id="cameraPlaceholder">
+            <div class="scan-icon" aria-hidden="true">⌁</div>
+            <strong>Ready to scan</strong>
+            <span>Use SCAN NOW to open the rear camera, or upload a clear package image.</span>
+          </div>
+
+          <div class="scan-corners" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <div class="scan-guide">Position the product inside the frame</div>
+        </div>
+
+        <div class="camera-actions" id="cameraActions">
+          <button type="button" class="button button-primary" id="scanNowButton">SCAN NOW</button>
+          <button type="button" class="button button-secondary" id="uploadButton">UPLOAD PACKAGE IMAGE</button>
+        </div>
+
+        <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp,image/*" hidden>
+
+        <div id="cameraNotice" class="notice" hidden aria-live="polite"></div>
+
+        <div id="capturedActions" class="captured-actions" hidden>
+          <button type="button" class="button button-secondary" id="scanAgainButton">SCAN AGAIN</button>
+          <button type="button" class="button button-primary" id="verifyProductButton">VERIFY PRODUCT</button>
+        </div>
+      </section>
+
+      <section class="manual-card" aria-labelledby="manualTitle">
+        <div>
+          <p class="eyebrow">DIRECT LOOKUP</p>
+          <h2 id="manualTitle">ENTER NAFDAC REGISTRATION NUMBER</h2>
+          <p>Use this option independently if you do not want to use the camera.</p>
+        </div>
+
+        <form id="registrationForm" class="registration-form">
+          <label for="regInput">NAFDAC registration number</label>
+          <input id="regInput" name="registration" inputmode="text" autocomplete="off"
+                 placeholder="Enter NAFDAC registration number">
+          <button type="submit" class="button button-primary wide">VERIFY NUMBER</button>
+        </form>
+      </section>
+
+      <section id="ocrStatus" class="status-card" hidden aria-live="polite">
+        <div class="status-progress" aria-hidden="true"><span id="ocrProgressBar"></span></div>
+        <strong id="ocrStatusTitle">Reading package</strong>
+        <p id="ocrStatusText">OCR is analysing the captured image.</p>
+      </section>
+
+      <section id="resultSection" class="result-section" hidden aria-live="polite" aria-atomic="true">
+        <div id="resultCard"></div>
+      </section>
+
+      <p class="scanner-disclaimer">
+        Reference lookup only. A matching reference record does not independently certify the physical product,
+        authenticity, quality, storage condition, safety, or current regulatory status.
+      </p>
+    </main>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+  <script src="data.js"></script>
+  <script src="scan.js"></script>
+</body>
+</html>

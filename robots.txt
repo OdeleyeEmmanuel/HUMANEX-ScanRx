@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://odeleyeemmanuel.github.io/HUMANEX-ScanRx/sitemap.xml
