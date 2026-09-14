@@ -2,7 +2,9 @@
   "use strict";
 
   const $ = (id) => document.getElementById(id);
-  const records = Array.isArray(window.NAfdacRecords) ? window.NAfdacRecords : [];
+  const records = Array.isArray(window.NAfdacRecords)
+    ? window.NAfdacRecords
+    : (typeof NAfdacRecords !== "undefined" && Array.isArray(NAfdacRecords) ? NAfdacRecords : []);
 
   const state = {
     stream: null,
@@ -448,6 +450,24 @@
     `;
   }
 
+  function openResultPopup() {
+    const section = $("resultSection");
+    section.hidden = false;
+    document.body.classList.add("result-popup-open");
+    section.setAttribute("role", "dialog");
+    section.setAttribute("aria-modal", "true");
+    section.setAttribute("aria-label", "ScanRx verification result");
+  }
+
+  function closeResultPopup() {
+    const section = $("resultSection");
+    section.hidden = true;
+    document.body.classList.remove("result-popup-open");
+    section.removeAttribute("role");
+    section.removeAttribute("aria-modal");
+    section.removeAttribute("aria-label");
+  }
+
   function renderVerified(record, meta = {}) {
     const status = String(record.status || "Reference record");
     const source = String(record.source || "Supplied reference dataset");
@@ -500,13 +520,12 @@
       </article>
     `;
 
-    $("resultSection").hidden = false;
+    openResultPopup();
     $("resetAfterResult").addEventListener("click", () => {
+      closeResultPopup();
       resetScanner({ clearResult: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
-
-    $("resultSection").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   function renderNotVerified(meta = {}) {
@@ -545,13 +564,12 @@
       </article>
     `;
 
-    $("resultSection").hidden = false;
+    openResultPopup();
     $("resetAfterResult").addEventListener("click", () => {
+      closeResultPopup();
       resetScanner({ clearResult: true });
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
-
-    $("resultSection").scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   $("scanNowButton").addEventListener("click", () => {
@@ -575,9 +593,12 @@
     stopCamera();
     setSelectedImage(file);
     setNotice("Image loaded. Reading the package and checking the reference dataset...", "success");
-    // Uploaded images follow the same real OCR verification path automatically.
-    // No fake result is shown: the result card is rendered only after OCR and reference lookup finish.
-    verifyProduct();
+    verifyProduct().catch(() => {
+      renderNotVerified({
+        method: "Package image",
+        reason: "The package image could not be processed. Please upload a clearer image or enter the NAFDAC registration number manually."
+      });
+    });
   });
 
   $("scanAgainButton").addEventListener("click", () => {
@@ -590,6 +611,15 @@
   $("registrationForm").addEventListener("submit", (event) => {
     event.preventDefault();
     verifyRegistration($("regInput").value);
+  });
+
+
+  $("resultSection").addEventListener("click", (event) => {
+    if (event.target === $("resultSection")) closeResultPopup();
+  });
+
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !$("resultSection").hidden) closeResultPopup();
   });
 
   window.addEventListener("beforeunload", stopCamera);

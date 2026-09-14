@@ -967,3 +967,51 @@ footer {
     transition: none;
   }
 }
+
+/* Verification results are intentionally shown as a modal popup, not below the scanner. */
+body.result-popup-open {
+  overflow: hidden;
+}
+
+.result-section {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  width: 100vw;
+  height: 100dvh;
+  max-width: none;
+  margin: 0;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(2, 8, 7, .82);
+  backdrop-filter: blur(8px);
+  overflow: auto;
+}
+
+.result-section > #resultCard {
+  width: min(680px, 100%);
+  max-width: 680px;
+  max-height: calc(100dvh - 32px);
+  overflow: auto;
+  border-radius: 22px;
+  overscroll-behavior: contain;
+}
+
+.result-card {
+  max-height: none;
+}
+
+@media (max-width: 560px) {
+  .result-section {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
+  .result-section > #resultCard {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 20px 20px 12px 12px;
+  }
+}
