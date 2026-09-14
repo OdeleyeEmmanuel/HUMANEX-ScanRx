@@ -43,10 +43,48 @@
     const compact = normalize(text);
     if (!compact) return null;
 
+    // First try an exact/contained product-name match.
     for (const [name, record] of nameMap) {
-      if (name.length >= 12 && compact.includes(name)) return record;
+      if (name.length >= 10 && compact.includes(name)) {
+        return { record, score: 1, matchedName: name };
+      }
     }
-    return null;
+
+    // OCR frequently misses a word or two. Compare meaningful tokens against
+    // the reference product names, but only accept a strong match. This never
+    // creates a product record: the candidate must already exist in the dataset.
+    const ocrTokens = new Set(
+      String(text || "")
+        .toUpperCase()
+        .replace(/[^A-Z0-9]+/g, " ")
+        .split(/\s+/)
+        .filter(token => token.length >= 3)
+    );
+
+    let best = null;
+    for (const [name, record] of nameMap) {
+      const nameTokens = name.match(/[A-Z0-9]{3,}/g) || [];
+      if (nameTokens.length < 2) continue;
+
+      let matched = 0;
+      for (const token of nameTokens) {
+        if (ocrTokens.has(token)) matched += 1;
+      }
+
+      const coverage = matched / nameTokens.length;
+      const tokenDensity = matched / Math.max(1, Math.min(nameTokens.length, ocrTokens.size));
+
+      // Require multiple meaningful words and a high coverage score so that
+      // generic OCR words such as NATURAL, TABLET or CHILD do not verify a
+      // random product.
+      if (matched >= 2 && coverage >= 0.60 && tokenDensity >= 0.12) {
+        if (!best || coverage > best.score) {
+          best = { record, score: coverage, matchedName: name };
+        }
+      }
+    }
+
+    return best;
   }
 
   function extractRegistrationCandidates(text) {
@@ -384,21 +422,33 @@
       setOCRStatus("Checking reference records", "Comparing the OCR result with the supplied reference dataset.", 100);
 
       const lookup = findMatchingRegistration(ocrText);
+      const nameLookup = findNameFromOCR(ocrText);
 
       if (lookup.record) {
         renderVerified(lookup.record, {
           method: "Package image",
           extractedRegistration: lookup.candidate,
-          extractedProduct: findNameFromOCR(ocrText)?.product_name || ""
+          extractedProduct: nameLookup?.record?.product_name || ""
+        });
+      } else if (nameLookup?.record) {
+        // If the package does not expose a readable NAFDAC number, a strong
+        // product-name match can identify an existing reference record. We
+        // still make clear that this is a reference match, not proof of the
+        // physical package's authenticity.
+        renderVerified(nameLookup.record, {
+          method: "Package image and product-name match",
+          extractedRegistration: "",
+          extractedProduct: nameLookup.record.product_name
         });
       } else {
         renderNotVerified({
           method: "Package image",
           extractedRegistration: lookup.candidate,
-          extractedProduct: findNameFromOCR(ocrText)?.product_name || "",
+          extractedProduct: "",
           reason: lookup.candidate
             ? "The OCR found a possible registration number, but it did not match the supplied reference dataset."
-            : "No usable NAFDAC registration number was read from the package image."
+            : "No matching NAFDAC registration number or sufficiently strong product-name match was found in the supplied reference dataset.",
+          extra: "The scanner reads product names and other visible package text as well as NAFDAC numbers. A product can only be shown as verified when the information read from the image matches an existing reference record."
         });
       }
     } catch (error) {
